@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cerbero - Emulador Localhost (Mobile First)</title>
+    
+    <!-- Tailwind CSS oficial CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cerbero: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#15803d',
+                            600: '#166534',
+                            800: '#14532d',
+                            900: '#052e16',
+                            dark: '#090d16',
+                            surface: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body class="h-full text-slate-800 antialiased flex flex-col md:flex-row bg-slate-100">
+
+    <!-- Container Flutuante de Toasts -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-3 pointer-events-none w-full max-w-sm px-4 md:px-0"></div>
+
+    <!-- Backdrop para Mobile -->
+    <div id="sidebar-backdrop" onclick="Cerbero.toggleSidebar()" class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm hidden md:hidden transition-opacity"></div>
+
+    <!-- Barra Lateral (Sidebar) -->
+    <aside id="sidebar-menu" class="fixed inset-y-0 left-0 z-40 w-72 bg-slate-900 text-white flex flex-col justify-between transform -translate-x-full md:translate-x-0 md:static md:inset-auto transition-transform duration-300 ease-in-out shadow-2xl border-r border-slate-800">
+        <div>
+            <!-- Cabeçalho do Logo -->
+            <div class="h-20 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-950/40">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="navegarPara('dashboard')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-900/40">
+                        <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-extrabold tracking-wider text-white">CERBERO</h1>
+                        <p class="text-[10px] uppercase tracking-widest text-emerald-400 font-semibold">Security & Control</p>
+                    </div>
+                </div>
+                <button onclick="Cerbero.toggleSidebar()" class="md:hidden text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Perfil Conectado (Identificação do Usuário e Nível de Acesso - CORE) -->
+            <div class="p-5 border-b border-slate-800/60 bg-slate-800/20">
+                <div class="flex items-center space-x-3">
+                    <div id="user-avatar" class="w-11 h-11 rounded-full bg-slate-700/80 border-2 border-emerald-500/40 flex items-center justify-center font-bold text-white shadow-inner">
+                        A
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p id="user-name" class="text-sm font-semibold text-white truncate">Administrador Cerbero</p>
+                        <div class="mt-1">
+                            <span id="user-badge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border bg-purple-950 text-purple-300 border-purple-600/40">
+                                <i class="fa-solid fa-circle text-[6px] mr-1.5 animate-pulse"></i>
+                                Administrador
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menus de Navegação -->
+            <nav class="p-4 space-y-1.5 text-sm font-medium">
+                <p class="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Principal</p>
+                
+                <button onclick="navegarPara('dashboard')" id="btn-nav-dashboard" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                        <span>Dashboard</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-60"></i>
+                </button>
+
+                <button onclick="navegarPara('usuarios')" id="btn-nav-usuarios" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-users w-5 text-center"></i>
+                        <span>Usuários</span>
+                    </div>
+                    <span id="badge-menu-usuarios" class="px-2 py-0.5 text-xs bg-slate-800 rounded-full text-slate-400">3</span>
+                </button>
+
+                <button onclick="navegarPara('registros')" id="btn-nav-registros" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-database w-5 text-center"></i>
+                        <span>Registros & Ativos</span>
+                    </div>
+                    <span id="badge-menu-registros" class="px-2 py-0.5 text-xs bg-slate-800 rounded-full text-slate-400">5</span>
+                </button>
+
+                <p class="px-3 pt-4 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Segurança & Acessos</p>
+                
+                <button onclick="navegarPara('solicitacoes')" id="btn-nav-solicitacoes" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-user-shield w-5 text-center"></i>
+                        <span>Solicitações</span>
+                    </div>
+                    <span id="badge-menu-solicitacoes" class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-rose-500 rounded-full animate-bounce">
+                        2
+                    </span>
+                </button>
+
+                <p class="px-3 pt-4 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Páginas Públicas</p>
+                
+                <button onclick="navegarPara('login')" id="btn-nav-login" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-right-to-bracket w-5 text-center"></i>
+                        <span>Tela de Login</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs opacity-60"></i>
+                </button>
+
+                <button onclick="navegarPara('solicitar_acesso')" id="btn-nav-solicitar" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-file-signature w-5 text-center"></i>
+                        <span>Solicitar Acesso</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs opacity-60"></i>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Rodapé do Menu Lateral -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950/30">
+            <button onclick="confirmarLogout()" class="w-full flex items-center justify-center space-x-2.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-600/90 text-slate-200 hover:text-white transition-all text-sm font-semibold">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Encerrar Sessão</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        
+        <!-- Header Superior / Navbar -->
+        <header class="h-20 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between shadow-sm sticky top-0 z-30">
+            <div class="flex items-center space-x-4">
+                <button onclick="Cerbero.toggleSidebar()" class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div>
+                    <h2 id="topbar-titulo" class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">Dashboard Administrativo</h2>
+                    <p id="topbar-subtitulo" class="text-xs text-slate-500 hidden sm:block">Controle central de acessos e monitoramento</p>
+                </div>
+            </div>
+
+            <!-- Status do Sistema + Notificação + Avatar (CORE) -->
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <!-- Status do Sistema (CORE) -->
+                <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span>Sistema Operacional</span>
+                </div>
+
+                <!-- Notificações -->
+                <button onclick="navegarPara('solicitacoes')" class="relative inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                    <i class="fa-solid fa-bell text-base"></i>
+                    <span id="topbar-badge-bell" class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white animate-pulse">2</span>
+                </button>
+
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+
+                <!-- Identificação do Usuário (CORE) -->
+                <div class="flex items-center space-x-3">
+                    <div class="text-right hidden sm:block">
+                        <span id="topbar-username" class="block text-sm font-bold text-slate-800 leading-tight">Administrador Cerbero</span>
+                        <span id="topbar-userrank" class="block text-[11px] font-medium text-slate-500">Administrador</span>
+                    </div>
+                    <div id="topbar-avatar" class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                        A
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SEÇÕES DINÂMICAS -->
+        
+        <!-- 1. VIEW: DASHBOARD -->
+        <main id="view-dashboard" class="p-4 sm:p-8 space-y-8 flex-1">
+            
+            <!-- Mensagem de Boas-vindas e Identificação (CORE) -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 p-6 sm:p-8 text-white shadow-xl border border-slate-700/50">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Central de Governança Cerbero</span>
+                        </div>
+                        <h1 id="welcome-heading" class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                            Bem-vindo(a) de volta, Administrador Cerbero!
+                        </h1>
+                        <p class="mt-2 text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
+                            Painel de controle em tempo real. Monitore acessos, atenda solicitações pendentes e gerencie todos os registros do sistema.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center space-x-4 bg-slate-800/80 backdrop-blur-md p-4 rounded-2xl border border-slate-700 shadow-inner flex-shrink-0">
+                        <div id="card-welcome-avatar" class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-black text-white text-lg">
+                            A
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 font-medium">Usuário Conectado</div>
+                            <div id="card-welcome-name" class="text-sm font-bold text-white">Administrador Cerbero</div>
+                            <div class="mt-1">
+                                <span id="card-welcome-badge" class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border bg-purple-500/20 text-purple-300 border-purple-500/30">
+                                    <i class="fa-solid fa-id-badge mr-1.5 text-[10px]"></i>
+                                    Administrador
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards de Métricas (CORE) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                
+                <!-- Card 1: Total de Usuários -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total de Usuários</p>
+                            <h3 id="stat-total-usuarios" class="text-3xl font-extrabold text-slate-800 mt-2">3</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Controle de acessos</span>
+                        <button onclick="navegarPara('usuarios')" class="font-semibold text-indigo-600 hover:text-indigo-800 inline-flex items-center space-x-1">
+                            <span>Gerenciar</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 2: Quantidade de Registros Cadastrados -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Registros Ativos</p>
+                            <h3 id="stat-total-registros" class="text-3xl font-extrabold text-slate-800 mt-2">5</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Ativos sob controle</span>
+                        <button onclick="navegarPara('registros')" class="font-semibold text-teal-600 hover:text-teal-800 inline-flex items-center space-x-1">
+                            <span>Ver itens</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 3: Solicitações de Acesso Pendentes -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Solicitações Pendentes</p>
+                            <h3 id="stat-total-solicitacoes" class="text-3xl font-extrabold text-slate-800 mt-2">2</h3>
+                        </div>
+                        <div id="stat-solicitacoes-icon" class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 animate-pulse flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-user-clock"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span id="stat-solicitacoes-subtext" class="text-rose-600 font-semibold">Aguardando análise</span>
+                        <button onclick="navegarPara('solicitacoes')" class="font-semibold text-rose-600 hover:text-rose-800 inline-flex items-center space-x-1">
+                            <span>Avaliar</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 4: Status do Sistema -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Status do Sistema</p>
+                            <h3 class="text-xl font-extrabold text-slate-800 mt-2 flex items-center space-x-2">
+                                <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+                                <span>Operacional</span>
+                            </h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-server"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Emulação Localhost</span>
+                        <span class="text-emerald-600 font-semibold">100% Ativo</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tabela Rápida de Solicitações Pendentes -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                            <i class="fa-solid fa-envelope-open-text text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Solicitações de Acesso Pendentes</h3>
+                            <p class="text-xs text-slate-500">Colaboradores que solicitaram credenciais no sistema</p>
+                        </div>
+                    </div>
+                    <button onclick="navegarPara('solicitacoes')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                        Ver Todas as Solicitações &rarr;
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50/70 text-xs uppercase font-bold text-slate-500 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-4">Solicitante</th>
+                                <th class="px-6 py-4">Departamento</th>
+                                <th class="px-6 py-4">Nível Desejado</th>
+                                <th class="px-6 py-4">Motivo</th>
+                                <th class="px-6 py-4 text-right">Ações Rápidas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-solicitacoes-dash" class="divide-y divide-slate-100">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabela dos Últimos Registros -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                            <i class="fa-solid fa-boxes-stacked text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Registros e Ativos Recentes</h3>
+                            <p class="text-xs text-slate-500">Itens cadastrados na governança Cerbero</p>
+                        </div>
+                    </div>
+                    <button onclick="abrirModalNovoRegistro()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md shadow-teal-600/20">
+                        + Novo Registro
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50/70 text-xs uppercase font-bold text-slate-500 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-4">Título do Registro</th>
+                                <th class="px-6 py-4">Categoria</th>
+                                <th class="px-6 py-4">Prioridade</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Responsável</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-registros-dash" class="divide-y divide-slate-100">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 2. VIEW: USUÁRIOS -->
+        <main id="view-usuarios" class="p-4 sm:p-8 space-y-6 flex-1 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="relative flex-1 max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </div>
+                    <input type="text" id="filtro-usuarios" oninput="renderizarUsuarios()" placeholder="Buscar usuário por nome ou e-mail..."
+                        class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <button onclick="abrirModalNovoUsuario()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-md shadow-emerald-600/20">
+                    <i class="fa-solid fa-user-plus text-xs mr-1.5"></i> Novo Usuário
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 text-base">Usuários Registrados</h3>
+                    <span id="usuarios-count-pill" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">3 usuários</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50/70 text-xs uppercase font-bold text-slate-500 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-4">Usuário</th>
+                                <th class="px-6 py-4">Departamento</th>
+                                <th class="px-6 py-4">Nível de Acesso</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-usuarios-corpo" class="divide-y divide-slate-100">
+                            <!-- Gerado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- 3. VIEW: REGISTROS -->
+        <main id="view-registros" class="p-4 sm:p-8 space-y-6 flex-1 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex flex-1 gap-2 max-w-lg">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                        </div>
+                        <input type="text" id="filtro-registros-busca" oninput="renderizarRegistros()" placeholder="Buscar registros..."
+                            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <select id="filtro-registros-cat" onchange="renderizarRegistros()" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm">
+                        <option value="">Todas</option>
+                        <option value="Infraestrutura">Infraestrutura</option>
+                        <option value="Segurança">Segurança</option>
+                        <option value="Backup">Backup</option>
+                        <option value="Auditoria">Auditoria</option>
+                    </select>
+                </div>
+                <button onclick="abrirModalNovoRegistro()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold shadow-md shadow-teal-600/20">
+                    <i class="fa-solid fa-plus text-xs mr-1.5"></i> Novo Registro
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 text-base">Inventário de Registros</h3>
+                    <span id="registros-count-pill" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700">5 itens</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50/70 text-xs uppercase font-bold text-slate-500 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-4">Título & Descrição</th>
+                                <th class="px-6 py-4">Categoria</th>
+                                <th class="px-6 py-4">Prioridade</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-registros-corpo" class="divide-y divide-slate-100">
+                            <!-- Gerado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- 4. VIEW: SOLICITAÇÕES -->
+        <main id="view-solicitacoes" class="p-4 sm:p-8 space-y-6 flex-1 hidden">
+            <!-- Abas de Status -->
+            <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
+                <button onclick="filtrarSolicitacoesStatus('Pendente')" id="tab-solic-pendente" class="tab-solic px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 text-white shadow-md shadow-rose-600/20">
+                    <i class="fa-solid fa-clock mr-1.5"></i> Pendentes (<span id="count-tab-pend">2</span>)
+                </button>
+                <button onclick="filtrarSolicitacoesStatus('Aprovada')" id="tab-solic-aprovada" class="tab-solic px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+                    <i class="fa-solid fa-circle-check mr-1.5 text-emerald-600"></i> Aprovadas (<span id="count-tab-aprov">1</span>)
+                </button>
+                <button onclick="filtrarSolicitacoesStatus('Rejeitada')" id="tab-solic-rejeitada" class="tab-solic px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+                    <i class="fa-solid fa-circle-xmark mr-1.5 text-rose-600"></i> Rejeitadas (<span id="count-tab-rej">1</span>)
+                </button>
+                <button onclick="filtrarSolicitacoesStatus('Todas')" id="tab-solic-todas" class="tab-solic px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+                    Todas
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <h3 id="solicitacoes-titulo-secao" class="font-bold text-slate-800 text-base">Solicitações Aguardando Avaliação</h3>
+                    <span class="text-xs text-slate-400">Modais personalizados para ação</span>
+                </div>
+                <div id="lista-solicitacoes-cards" class="divide-y divide-slate-100">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+        </main>
+
+        <!-- 5. VIEW: LOGIN -->
+        <main id="view-login" class="p-4 sm:p-8 flex-1 flex items-center justify-center hidden">
+            <div class="w-full max-w-md bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 mb-3">
+                        <i class="fa-solid fa-shield-halved text-white text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-extrabold text-white">Login Cerbero</h2>
+                    <p class="text-xs text-slate-400 mt-1">Simule o login como Administrador, Gerente ou Operador</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">E-mail</label>
+                        <input type="email" id="login-input-email" value="admin@cerbero.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Senha</label>
+                        <input type="password" id="login-input-senha" value="admin123" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm">
+                    </div>
+
+                    <button onclick="efetuarLoginSimulado()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-sm shadow-lg shadow-emerald-900/40">
+                        Entrar no Sistema
+                    </button>
+
+                    <div class="pt-4 border-t border-slate-800 text-center">
+                        <p class="text-[11px] text-slate-400 uppercase font-bold mb-2">Alternar Usuário Rapidamente:</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <button onclick="setCredencial('admin@cerbero.com', 'admin123', 'Administrador Cerbero', 'Administrador')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 text-xs font-mono">
+                                Admin
+                            </button>
+                            <button onclick="setCredencial('carlos@cerbero.com', 'carlos123', 'Carlos Silva', 'Gerente')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-sky-400 text-xs font-mono">
+                                Gerente
+                            </button>
+                            <button onclick="setCredencial('ana@cerbero.com', 'ana123', 'Ana Martins', 'Operador')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-teal-400 text-xs font-mono">
+                                Operador
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 6. VIEW: SOLICITAR ACESSO -->
+        <main id="view-solicitar_acesso" class="p-4 sm:p-8 flex-1 flex items-center justify-center hidden">
+            <div class="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2">
+                        <i class="fa-solid fa-file-signature text-xl"></i>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-slate-800">Solicitação de Acesso</h2>
+                    <p class="text-xs text-slate-500 mt-1">Preencha seus dados para requisitar credenciais</p>
+                </div>
+
+                <form onsubmit="enviarSolicitacaoPublica(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nome Completo</label>
+                        <input type="text" id="solic-nome" required placeholder="Ex: Vanessa Duarte" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">E-mail Corporativo</label>
+                        <input type="email" id="solic-email" required placeholder="vanessa@empresa.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Departamento</label>
+                            <select id="solic-dep" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
+                                <option value="Tecnologia da Informação">TI</option>
+                                <option value="Segurança da Informação">Segurança</option>
+                                <option value="Compliance">Compliance</option>
+                                <option value="Operações">Operações</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nível Desejado</label>
+                            <select id="solic-nivel" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
+                                <option value="Operador">Operador</option>
+                                <option value="Gerente">Gerente</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Justificativa / Motivo</label>
+                        <textarea id="solic-motivo" rows="3" required placeholder="Explique por que necessita de acesso..." class="w-full p-3 rounded-xl border border-slate-200 text-sm"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20">
+                        Enviar Solicitação de Acesso
+                    </button>
+                </form>
+            </div>
+        </main>
+
+        <!-- Rodapé do Emulador -->
+        <footer class="mt-auto py-5 px-4 sm:px-8 border-t border-slate-200/80 bg-white/70 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <div>
+                <strong>CERBERO</strong> &copy; 2026 &bull; Emulação Localhost Ativa na Porta 8080
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center space-x-1.5 text-emerald-600 font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Modais & Toasts Ativos</span>
+                </span>
+                <span class="text-slate-300">|</span>
+                <span>Mobile First &bull; Tailwind CSS</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- MODAL GLOBAL DE CONFIRMAÇÃO (Substitui confirm()) -->
+    <div id="global-confirm-modal" class="cerbero-modal hidden fixed inset-0 z-50 overflow-y-auto items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="Cerbero.closeModal('global-confirm-modal')"></div>
+        <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl z-10 border border-slate-100">
+            <h3 id="confirm-modal-title" class="text-base font-bold text-slate-900 mb-2">Confirmar Ação</h3>
+            <p id="confirm-modal-message" class="text-sm text-slate-600 mb-6"></p>
+            <div class="flex items-center justify-end space-x-3">
+                <button type="button" onclick="Cerbero.closeModal('global-confirm-modal')" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                    Cancelar
+                </button>
+                <button type="button" id="confirm-modal-submit-btn" class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO / EDITAR USUÁRIO -->
+    <div id="modal-usuario" class="cerbero-modal hidden fixed inset-0 z-50 overflow-y-auto items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="Cerbero.closeModal('modal-usuario')"></div>
+        <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl z-10 border border-slate-100">
+            <h3 id="modal-usuario-title" class="text-base font-bold text-slate-900 mb-4">Novo Usuário</h3>
+            <form onsubmit="salvarUsuarioSimulado(event)" class="space-y-3">
+                <input type="hidden" id="edit-user-id" value="">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nome Completo</label>
+                    <input type="text" id="user-input-nome" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">E-mail</label>
+                    <input type="email" id="user-input-email" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nível</label>
+                        <select id="user-input-nivel" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="Operador">Operador</option>
+                            <option value="Gerente">Gerente</option>
+                            <option value="Administrador">Administrador</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Status</label>
+                        <select id="user-input-status" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="Ativo">Ativo</option>
+                            <option value="Inativo">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Departamento</label>
+                    <input type="text" id="user-input-dep" value="Tecnologia da Informação" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="Cerbero.closeModal('modal-usuario')" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-emerald-600 rounded-xl">Salvar Usuário</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO / EDITAR REGISTRO -->
+    <div id="modal-registro" class="cerbero-modal hidden fixed inset-0 z-50 overflow-y-auto items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="Cerbero.closeModal('modal-registro')"></div>
+        <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl z-10 border border-slate-100">
+            <h3 id="modal-registro-title" class="text-base font-bold text-slate-900 mb-4">Novo Registro</h3>
+            <form onsubmit="salvarRegistroSimulado(event)" class="space-y-3">
+                <input type="hidden" id="edit-reg-id" value="">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Título do Ativo / Registro</label>
+                    <input type="text" id="reg-input-titulo" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Categoria</label>
+                        <select id="reg-input-categoria" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="Infraestrutura">Infraestrutura</option>
+                            <option value="Segurança">Segurança</option>
+                            <option value="Backup">Backup</option>
+                            <option value="Auditoria">Auditoria</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Prioridade</label>
+                        <select id="reg-input-prioridade" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média" selected>Média</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Crítica">Crítica</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Descrição</label>
+                    <textarea id="reg-input-descricao" rows="3" required class="w-full p-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="Cerbero.closeModal('modal-registro')" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-teal-600 rounded-xl">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts e Framework Cerbero -->
+    <script src="assets/js/cerbero.js"></script>
+
+    <script>
+        // ESTADO GLOBAL REATIVO DO EMULADOR LOCALHOST
+        let state = {
+            currentUser: {
+                nome: 'Administrador Cerbero',
+                email: 'admin@cerbero.com',
+                nivel: 'Administrador'
+            },
+            usuarios: [
+                { id: 1, nome: 'Administrador Cerbero', email: 'admin@cerbero.com', nivel: 'Administrador', status: 'Ativo', dep: 'Segurança da Informação' },
+                { id: 2, nome: 'Carlos Silva', email: 'carlos@cerbero.com', nivel: 'Gerente', status: 'Ativo', dep: 'Operações & Infraestrutura' },
+                { id: 3, nome: 'Ana Martins', email: 'ana@cerbero.com', nivel: 'Operador', status: 'Ativo', dep: 'Atendimento ao Cliente' }
+            ],
+            registros: [
+                { id: 1, titulo: 'Servidor Principal Cerbero Node-01', categoria: 'Infraestrutura', prioridade: 'Crítica', status: 'Ativo', descricao: 'Cluster balanceado para gateway de autenticação.', autor: 'Administrador' },
+                { id: 2, titulo: 'Firewall Fortinet 200F', categoria: 'Segurança', prioridade: 'Alta', status: 'Ativo', descricao: 'Regras de proteção DDoS e filtragem de portas sensíveis.', autor: 'Administrador' },
+                { id: 3, titulo: 'Certificado SSL Wildcard', categoria: 'Segurança', prioridade: 'Média', status: 'Ativo', descricao: 'Renovação do certificado SSL TLSv1.3 até 2027.', autor: 'Carlos Silva' },
+                { id: 4, titulo: 'Rotina Diária de Backup em Nuvem', categoria: 'Backup', prioridade: 'Alta', status: 'Concluído', descricao: 'Snapshot automático da base MySQL para AWS S3.', autor: 'Administrador' },
+                { id: 5, titulo: 'Revisão das Credenciais de API', categoria: 'Auditoria', prioridade: 'Média', status: 'Pendente', descricao: 'Auditoria periódica de chaves de integração.', autor: 'Carlos Silva' }
+            ],
+            solicitacoes: [
+                { id: 1, nome: 'Mariana Costa', email: 'mariana.costa@empresa.com', dep: 'Compliance', nivel: 'Gerente', motivo: 'Auditoria trimestral de governança de TI e conformidade.', status: 'Pendente' },
+                { id: 2, nome: 'Lucas Rocha', email: 'lucas.rocha@empresa.com', dep: 'Suporte Técnico', nivel: 'Operador', motivo: 'Novo colaborador de suporte e triagem de chamados.', status: 'Pendente' },
+                { id: 3, nome: 'Beatriz Almeida', email: 'beatriz.almeida@empresa.com', dep: 'Logística', nivel: 'Operador', motivo: 'Acesso para inventário físico de filial.', status: 'Aprovada' },
+                { id: 4, nome: 'Rafael Souza', email: 'rafael.souza@empresa.com', dep: 'Vendas', nivel: 'Administrador', motivo: 'Sem justificativa adequada.', status: 'Rejeitada' }
+            ],
+            statusSolicitacaoFiltro: 'Pendente'
+        };
+
+        // Navegação entre abas
+        function navegarPara(viewId) {
+            document.querySelectorAll('main').forEach(m => m.classList.add('hidden'));
+            const target = document.getElementById('view-' + viewId);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('bg-emerald-600', 'text-white', 'font-semibold');
+                b.classList.add('text-slate-300');
+            });
+            const btn = document.getElementById('btn-nav-' + viewId);
+            if (btn) {
+                btn.classList.add('bg-emerald-600', 'text-white', 'font-semibold');
+                btn.classList.remove('text-slate-300');
+            }
+
+            const titulos = {
+                dashboard: ['Dashboard Administrativo', 'Controle central de acessos e monitoramento'],
+                usuarios: ['Gerenciamento de Usuários', 'Cadastro, credenciais e controle de permissões'],
+                registros: ['Registros & Cadastros', 'Inventário e cadastro de ativos de infraestrutura'],
+                solicitacoes: ['Solicitações de Acesso', 'Triagem de pedidos pendentes de novas contas'],
+                login: ['Tela de Login', 'Autenticação e controle de sessões nativas'],
+                solicitar_acesso: ['Solicitar Acesso', 'Formulário público de solicitação de credenciais']
+            };
+
+            if (titulos[viewId]) {
+                document.getElementById('topbar-titulo').innerText = titulos[viewId][0];
+                document.getElementById('topbar-subtitulo').innerText = titulos[viewId][1];
+            }
+
+            // Fecha a barra lateral no mobile se estiver aberta
+            const sidebar = document.getElementById('sidebar-menu');
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                Cerbero.toggleSidebar();
+            }
+
+            atualizarUI();
+        }
+
+        // Atualização da UI
+        function atualizarUI() {
+            // Métricas
+            document.getElementById('stat-total-usuarios').innerText = state.usuarios.length;
+            document.getElementById('stat-total-registros').innerText = state.registros.length;
+            
+            const pendentes = state.solicitacoes.filter(s => s.status === 'Pendente');
+            document.getElementById('stat-total-solicitacoes').innerText = pendentes.length;
+            document.getElementById('topbar-badge-bell').innerText = pendentes.length;
+            document.getElementById('badge-menu-solicitacoes').innerText = pendentes.length;
+            document.getElementById('badge-menu-usuarios').innerText = state.usuarios.length;
+            document.getElementById('badge-menu-registros').innerText = state.registros.length;
+
+            if (pendentes.length === 0) {
+                document.getElementById('badge-menu-solicitacoes').classList.remove('animate-bounce', 'bg-rose-500');
+                document.getElementById('badge-menu-solicitacoes').classList.add('bg-slate-700');
+            } else {
+                document.getElementById('badge-menu-solicitacoes').classList.add('animate-bounce', 'bg-rose-500');
+                document.getElementById('badge-menu-solicitacoes').classList.remove('bg-slate-700');
+            }
+
+            // Renderiza tabelas do Dashboard
+            renderizarDashboard();
+            renderizarUsuarios();
+            renderizarRegistros();
+            renderizarSolicitacoes();
+        }
+
+        function renderizarDashboard() {
+            const corpoSolic = document.getElementById('tabela-solicitacoes-dash');
+            const pendentes = state.solicitacoes.filter(s => s.status === 'Pendente');
+
+            if (pendentes.length === 0) {
+                corpoSolic.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">Nenhuma solicitação pendente no momento!</td></tr>`;
+            } else {
+                corpoSolic.innerHTML = pendentes.map(s => `
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-slate-800">${s.nome}</div>
+                            <div class="text-xs text-slate-400">${s.email}</div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-medium">${s.dep}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${s.nivel}</span>
+                        </td>
+                        <td class="px-6 py-4 text-xs max-w-xs truncate" title="${s.motivo}">${s.motivo}</td>
+                        <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                            <button onclick="aprovarSolicitacaoModal(${s.id}, '${s.nome}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">
+                                <i class="fa-solid fa-check mr-1"></i> Aprovar
+                            </button>
+                            <button onclick="rejeitarSolicitacaoModal(${s.id}, '${s.nome}')" class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200">
+                                <i class="fa-solid fa-xmark mr-1"></i> Rejeitar
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            const corpoReg = document.getElementById('tabela-registros-dash');
+            corpoReg.innerHTML = state.registros.slice(0, 4).map(r => `
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                    <td class="px-6 py-4 font-bold text-slate-800">${r.titulo}</td>
+                    <td class="px-6 py-4 text-xs"><span class="px-2 py-0.5 rounded bg-slate-100 border text-slate-700 font-medium">${r.categoria}</span></td>
+                    <td class="px-6 py-4 text-xs font-bold text-${r.prioridade === 'Crítica' || r.prioridade === 'Alta' ? 'rose' : 'amber'}-700">${r.prioridade}</td>
+                    <td class="px-6 py-4 text-xs font-semibold text-emerald-700">&bull; ${r.status}</td>
+                    <td class="px-6 py-4 text-xs text-slate-500">${r.autor}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarUsuarios() {
+            const filtro = (document.getElementById('filtro-usuarios')?.value || '').toLowerCase();
+            const filtrados = state.usuarios.filter(u => u.nome.toLowerCase().includes(filtro) || u.email.toLowerCase().includes(filtro));
+            const countPill = document.getElementById('usuarios-count-pill');
+            if (countPill) countPill.innerText = `${filtrados.length} usuários`;
+
+            const corpo = document.getElementById('tabela-usuarios-corpo');
+            if (!corpo) return;
+
+            corpo.innerHTML = filtrados.map(u => `
+                <tr class="hover:bg-slate-50/60">
+                    <td class="px-6 py-4 flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-xl bg-slate-100 font-bold flex items-center justify-center text-slate-700">${u.nome.charAt(0)}</div>
+                        <div>
+                            <div class="font-bold text-slate-800">${u.nome}</div>
+                            <div class="text-xs text-slate-400">${u.email}</div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-medium">${u.dep}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-bold ${u.nivel === 'Administrador' ? 'bg-purple-50 text-purple-700 border border-purple-200' : u.nivel === 'Gerente' ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">${u.nivel}</span>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-semibold text-emerald-700">&bull; ${u.status}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <button onclick="editarUsuarioModal(${u.id})" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <button onclick="excluirUsuarioModal(${u.id}, '${u.nome}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarRegistros() {
+            const busca = (document.getElementById('filtro-registros-busca')?.value || '').toLowerCase();
+            const cat = document.getElementById('filtro-registros-cat')?.value || '';
+            const filtrados = state.registros.filter(r => (r.titulo.toLowerCase().includes(busca) || r.descricao.toLowerCase().includes(busca)) && (!cat || r.categoria === cat));
+            
+            const countPill = document.getElementById('registros-count-pill');
+            if (countPill) countPill.innerText = `${filtrados.length} itens`;
+
+            const corpo = document.getElementById('tabela-registros-corpo');
+            if (!corpo) return;
+
+            corpo.innerHTML = filtrados.map(r => `
+                <tr class="hover:bg-slate-50/60">
+                    <td class="px-6 py-4 max-w-sm">
+                        <div class="font-bold text-slate-800">${r.titulo}</div>
+                        <div class="text-xs text-slate-500 truncate">${r.descricao}</div>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-semibold">${r.categoria}</td>
+                    <td class="px-6 py-4 text-xs font-bold text-${r.prioridade === 'Crítica' || r.prioridade === 'Alta' ? 'rose' : 'amber'}-700">${r.prioridade}</td>
+                    <td class="px-6 py-4 text-xs font-semibold text-emerald-700">&bull; ${r.status}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <button onclick="editarRegistroModal(${r.id})" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <button onclick="excluirRegistroModal(${r.id}, '${r.titulo}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarSolicitacoes() {
+            const container = document.getElementById('lista-solicitacoes-cards');
+            if (!container) return;
+
+            const pends = state.solicitacoes.filter(s => s.status === 'Pendente').length;
+            const aprovs = state.solicitacoes.filter(s => s.status === 'Aprovada').length;
+            const rejs = state.solicitacoes.filter(s => s.status === 'Rejeitada').length;
+
+            document.getElementById('count-tab-pend').innerText = pends;
+            document.getElementById('count-tab-aprov').innerText = aprovs;
+            document.getElementById('count-tab-rej').innerText = rejs;
+
+            const filtradas = (state.statusSolicitacaoFiltro === 'Todas') 
+                ? state.solicitacoes 
+                : state.solicitacoes.filter(s => s.status === state.statusSolicitacaoFiltro);
+
+            if (filtradas.length === 0) {
+                container.innerHTML = `<div class="p-12 text-center text-slate-400 font-semibold">Nenhuma solicitação encontrada para este filtro.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtradas.map(s => `
+                <div class="p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="space-y-1.5">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-slate-800 text-base">${s.nome}</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${s.status === 'Pendente' ? 'bg-amber-50 text-amber-700 border border-amber-200' : s.status === 'Aprovada' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">${s.status}</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">Nível: ${s.nivel}</span>
+                        </div>
+                        <div class="text-xs text-slate-500">${s.email} &bull; ${s.dep}</div>
+                        <div class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100 mt-2">${s.motivo}</div>
+                    </div>
+
+                    ${s.status === 'Pendente' ? `
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <button onclick="aprovarSolicitacaoModal(${s.id}, '${s.nome}')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20">
+                                <i class="fa-solid fa-check mr-1"></i> Aprovar Acesso
+                            </button>
+                            <button onclick="rejeitarSolicitacaoModal(${s.id}, '${s.nome}')" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200">
+                                <i class="fa-solid fa-xmark mr-1"></i> Rejeitar
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function filtrarSolicitacoesStatus(status) {
+            state.statusSolicitacaoFiltro = status;
+            document.querySelectorAll('.tab-solic').forEach(b => {
+                b.className = 'tab-solic px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50';
+            });
+            const activeId = (status === 'Pendente') ? 'tab-solic-pendente' : (status === 'Aprovada') ? 'tab-solic-aprovada' : (status === 'Rejeitada') ? 'tab-solic-rejeitada' : 'tab-solic-todas';
+            const btn = document.getElementById(activeId);
+            if (btn) btn.className = 'tab-solic px-4 py-2 rounded-xl text-sm font-bold bg-slate-800 text-white shadow-md';
+            renderizarSolicitacoes();
+        }
+
+        // Ações de Solicitação via Modais Customizados
+        function aprovarSolicitacaoModal(id, nome) {
+            Cerbero.confirmModal({
+                title: 'Aprovar Solicitação de Acesso',
+                message: `Deseja realmente aprovar a solicitação para ${nome}? Uma nova credencial será gerada e o usuário passará a ter acesso imediato.`,
+                confirmText: 'Sim, Aprovar Acesso',
+                confirmColor: 'emerald',
+                onConfirm: function() {
+                    const solic = state.solicitacoes.find(s => s.id === id);
+                    if (solic) {
+                        solic.status = 'Aprovada';
+                        // Adiciona aos usuários
+                        if (!state.usuarios.find(u => u.email === solic.email)) {
+                            state.usuarios.push({
+                                id: state.usuarios.length + 1,
+                                nome: solic.nome,
+                                email: solic.email,
+                                nivel: solic.nivel,
+                                status: 'Ativo',
+                                dep: solic.dep
+                            });
+                        }
+                    }
+                    atualizarUI();
+                    Cerbero.toast('sucesso', 'Acesso Aprovado!', `A solicitação de ${nome} foi aprovada e a conta de usuário foi criada.`);
+                }
+            });
+        }
+
+        function rejeitarSolicitacaoModal(id, nome) {
+            Cerbero.confirmModal({
+                title: 'Rejeitar Solicitação',
+                message: `Tem certeza que deseja rejeitar o pedido de acesso de ${nome}?`,
+                confirmText: 'Sim, Rejeitar',
+                confirmColor: 'red',
+                onConfirm: function() {
+                    const solic = state.solicitacoes.find(s => s.id === id);
+                    if (solic) solic.status = 'Rejeitada';
+                    atualizarUI();
+                    Cerbero.toast('aviso', 'Solicitação Rejeitada', `A solicitação de ${nome} foi rejeitada.`);
+                }
+            });
+        }
+
+        // Modais de Usuários
+        function abrirModalNovoUsuario() {
+            document.getElementById('modal-usuario-title').innerText = 'Novo Usuário';
+            document.getElementById('edit-user-id').value = '';
+            document.getElementById('user-input-nome').value = '';
+            document.getElementById('user-input-email').value = '';
+            document.getElementById('user-input-nivel').value = 'Operador';
+            document.getElementById('user-input-status').value = 'Ativo';
+            Cerbero.openModal('modal-usuario');
+        }
+
+        function editarUsuarioModal(id) {
+            const u = state.usuarios.find(x => x.id === id);
+            if (!u) return;
+            document.getElementById('modal-usuario-title').innerText = 'Editar Usuário';
+            document.getElementById('edit-user-id').value = u.id;
+            document.getElementById('user-input-nome').value = u.nome;
+            document.getElementById('user-input-email').value = u.email;
+            document.getElementById('user-input-nivel').value = u.nivel;
+            document.getElementById('user-input-status').value = u.status;
+            document.getElementById('user-input-dep').value = u.dep;
+            Cerbero.openModal('modal-usuario');
+        }
+
+        function salvarUsuarioSimulado(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-user-id').value;
+            const nome = document.getElementById('user-input-nome').value;
+            const email = document.getElementById('user-input-email').value;
+            const nivel = document.getElementById('user-input-nivel').value;
+            const status = document.getElementById('user-input-status').value;
+            const dep = document.getElementById('user-input-dep').value;
+
+            if (id) {
+                const u = state.usuarios.find(x => x.id == id);
+                if (u) {
+                    u.nome = nome; u.email = email; u.nivel = nivel; u.status = status; u.dep = dep;
+                }
+                Cerbero.toast('sucesso', 'Usuário Atualizado', `Dados de ${nome} foram salvos com sucesso.`);
+            } else {
+                state.usuarios.push({
+                    id: state.usuarios.length + 1,
+                    nome, email, nivel, status, dep
+                });
+                Cerbero.toast('sucesso', 'Novo Usuário', `${nome} foi cadastrado com sucesso.`);
+            }
+
+            Cerbero.closeModal('modal-usuario');
+            atualizarUI();
+        }
+
+        function excluirUsuarioModal(id, nome) {
+            Cerbero.confirmModal({
+                title: 'Excluir Usuário',
+                message: `Deseja remover permanentemente o usuário ${nome}?`,
+                confirmText: 'Sim, Excluir',
+                confirmColor: 'red',
+                onConfirm: function() {
+                    state.usuarios = state.usuarios.filter(x => x.id !== id);
+                    atualizarUI();
+                    Cerbero.toast('sucesso', 'Usuário Removido', `${nome} foi excluído do sistema.`);
+                }
+            });
+        }
+
+        // Modais de Registros
+        function abrirModalNovoRegistro() {
+            document.getElementById('modal-registro-title').innerText = 'Novo Registro';
+            document.getElementById('edit-reg-id').value = '';
+            document.getElementById('reg-input-titulo').value = '';
+            document.getElementById('reg-input-categoria').value = 'Infraestrutura';
+            document.getElementById('reg-input-prioridade').value = 'Média';
+            document.getElementById('reg-input-descricao').value = '';
+            Cerbero.openModal('modal-registro');
+        }
+
+        function editarRegistroModal(id) {
+            const r = state.registros.find(x => x.id === id);
+            if (!r) return;
+            document.getElementById('modal-registro-title').innerText = 'Editar Registro';
+            document.getElementById('edit-reg-id').value = r.id;
+            document.getElementById('reg-input-titulo').value = r.titulo;
+            document.getElementById('reg-input-categoria').value = r.categoria;
+            document.getElementById('reg-input-prioridade').value = r.prioridade;
+            document.getElementById('reg-input-descricao').value = r.descricao;
+            Cerbero.openModal('modal-registro');
+        }
+
+        function salvarRegistroSimulado(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-reg-id').value;
+            const titulo = document.getElementById('reg-input-titulo').value;
+            const categoria = document.getElementById('reg-input-categoria').value;
+            const prioridade = document.getElementById('reg-input-prioridade').value;
+            const descricao = document.getElementById('reg-input-descricao').value;
+
+            if (id) {
+                const r = state.registros.find(x => x.id == id);
+                if (r) {
+                    r.titulo = titulo; r.categoria = categoria; r.prioridade = prioridade; r.descricao = descricao;
+                }
+                Cerbero.toast('sucesso', 'Registro Atualizado', `"${titulo}" foi atualizado.`);
+            } else {
+                state.registros.unshift({
+                    id: state.registros.length + 1,
+                    titulo, categoria, prioridade, status: 'Ativo', descricao, autor: state.currentUser.nome
+                });
+                Cerbero.toast('sucesso', 'Registro Criado', `"${titulo}" foi cadastrado no sistema.`);
+            }
+
+            Cerbero.closeModal('modal-registro');
+            atualizarUI();
+        }
+
+        function excluirRegistroModal(id, titulo) {
+            Cerbero.confirmModal({
+                title: 'Excluir Registro',
+                message: `Deseja realmente remover o registro "${titulo}"?`,
+                confirmText: 'Sim, Excluir',
+                confirmColor: 'red',
+                onConfirm: function() {
+                    state.registros = state.registros.filter(x => x.id !== id);
+                    atualizarUI();
+                    Cerbero.toast('sucesso', 'Registro Excluído', `"${titulo}" foi removido.`);
+                }
+            });
+        }
+
+        // Login Simulado
+        function setCredencial(email, senha, nome, nivel) {
+            document.getElementById('login-input-email').value = email;
+            document.getElementById('login-input-senha').value = senha;
+            state.currentUser = { nome, email, nivel };
+            Cerbero.toast('info', 'Credencial Selecionada', `Carregado: ${nome} (${nivel})`);
+        }
+
+        function efetuarLoginSimulado() {
+            const email = document.getElementById('login-input-email').value;
+            const user = state.usuarios.find(u => u.email === email) || state.currentUser;
+            state.currentUser = {
+                nome: user.nome,
+                email: user.email,
+                nivel: user.nivel_acesso || user.nivel || 'Operador'
+            };
+
+            // Atualiza Perfil na UI
+            document.getElementById('user-name').innerText = state.currentUser.nome;
+            document.getElementById('user-avatar').innerText = state.currentUser.nome.charAt(0);
+            document.getElementById('topbar-username').innerText = state.currentUser.nome;
+            document.getElementById('topbar-userrank').innerText = state.currentUser.nivel;
+            document.getElementById('topbar-avatar').innerText = state.currentUser.nome.charAt(0);
+            document.getElementById('welcome-heading').innerText = `Bem-vindo(a) de volta, ${state.currentUser.nome}!`;
+            document.getElementById('card-welcome-name').innerText = state.currentUser.nome;
+            document.getElementById('card-welcome-avatar').innerText = state.currentUser.nome.charAt(0);
+
+            const badgeEl = document.getElementById('user-badge');
+            const welcomeBadgeEl = document.getElementById('card-welcome-badge');
+            const badgeClasses = (state.currentUser.nivel === 'Administrador') 
+                ? 'bg-purple-950 text-purple-300 border-purple-600/40' 
+                : (state.currentUser.nivel === 'Gerente')
+                ? 'bg-sky-950 text-sky-300 border-sky-600/40'
+                : 'bg-emerald-950 text-emerald-300 border-emerald-600/40';
+
+            badgeEl.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ' + badgeClasses;
+            badgeEl.innerHTML = `<i class="fa-solid fa-circle text-[6px] mr-1.5 animate-pulse"></i> ${state.currentUser.nivel}`;
+            welcomeBadgeEl.innerHTML = `<i class="fa-solid fa-id-badge mr-1.5 text-[10px]"></i> ${state.currentUser.nivel}`;
+
+            Cerbero.toast('sucesso', 'Autenticado com Sucesso!', `Bem-vindo, ${state.currentUser.nome}!`);
+            navegarPara('dashboard');
+        }
+
+        // Formulário Público de Solicitação
+        function enviarSolicitacaoPublica(e) {
+            e.preventDefault();
+            const nome = document.getElementById('solic-nome').value;
+            const email = document.getElementById('solic-email').value;
+            const dep = document.getElementById('solic-dep').value;
+            const nivel = document.getElementById('solic-nivel').value;
+            const motivo = document.getElementById('solic-motivo').value;
+
+            state.solicitacoes.unshift({
+                id: state.solicitacoes.length + 1,
+                nome, email, dep, nivel, motivo, status: 'Pendente'
+            });
+
+            Cerbero.toast('sucesso', 'Solicitação Enviada!', 'Seu pedido de acesso foi registrado com sucesso.');
+            navegarPara('dashboard');
+        }
+
+        function confirmarLogout() {
+            Cerbero.confirmModal({
+                title: 'Encerrar Sessão',
+                message: 'Tem certeza que deseja sair do sistema Cerbero?',
+                confirmText: 'Sim, Sair',
+                confirmColor: 'red',
+                onConfirm: function() {
+                    Cerbero.toast('info', 'Sessão Encerrada', 'Você saiu com segurança.');
+                    navegarPara('login');
+                }
+            });
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            atualizarUI();
+            Cerbero.toast('sucesso', 'Cerbero Localhost Ativo', 'Servidor emulando com sucesso em http://localhost:8080');
+        });
+    </script>
+</body>
+</html>
